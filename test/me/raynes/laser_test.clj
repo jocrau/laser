@@ -131,8 +131,10 @@
 (fact "about attr"
   ((l/attr :class "a") node) => (assoc node :attrs {:class "a"}))
 
-(fact "about classes"
-  ((l/classes "a b") node) => (assoc node :attrs {:class "a b"}))
+(facts "about classes"
+  ((l/classes "a b") node) => (assoc node :attrs {:class "a b"})
+  ((l/classes "a" "b") node) => (assoc node :attrs {:class "a b"})
+  ((l/classes ["a" "b"]) node) => (assoc node :attrs {:class "a b"}))
 
 (fact "about id"
   ((l/id "hi") node) => (assoc node :attrs {:id "hi"}))

@@ -3,6 +3,7 @@
   (:require [clojure.core :as clj]
             [hickory.core :as hickory]
             [clojure.zip :as zip]
+            [clojure.string :as str]
             [me.raynes.laser.zip :as lzip]
             [clojure.string :as string]
             [flatland.useful.ns :refer [defalias]]
@@ -37,7 +38,7 @@
      :parser   -- Either :html or :xml to choose which parser to use.
      :resource -- Either true or false. If true, wraps s in a resource."
   [s & {:keys [parser resource]
-        :or {parser *parser*}}]
+        :or   {parser *parser*}}]
   (-> (eat s resource)
       (hickory/parse parser)
       (hickory/as-hickory)
@@ -54,11 +55,11 @@
      :parser   -- Either :html or :xml to choose which parser to use.
      :resource -- Either true or false. If true, wraps s in a resource."
   [s & {:keys [parser resource]
-        :or {parser *parser*}}]
+        :or   {parser *parser*}}]
   (cond
-   (sequential? s) s
-   (map? s) [s]
-   :else (map hickory/as-hickory (hickory/parse-fragment (eat s resource) parser))))
+    (sequential? s) s
+    (map? s) [s]
+    :else (map hickory/as-hickory (hickory/parse-fragment (eat s resource) parser))))
 
 (defn parse-fragment
   "Parses an HTML or XML fragment. s can be a string in which case it will be treated
@@ -75,9 +76,9 @@
   "Convert a hickory zip back to html."
   [z]
   (hickory/hickory-to-html
-   (if (zipper? z)
-     (zip/root z)
-     z)))
+    (if (zipper? z)
+      (zip/root z)
+      z)))
 
 (defn fragment-to-html
   "Takes a parsed fragment and converts it back to HTML."
@@ -90,14 +91,14 @@
    defaults will be provided. Keys that can be passed are :type, :content, and
    :attrs"
   [tag & {:keys [type content attrs]
-          :or {type :element}}]
-  {:tag tag
-   :type type
+          :or   {type :element}}]
+  {:tag     tag
+   :type    type
    :content (cond
               (nil? content) nil
               (sequential? content) (flatten content)
               :else [content])
-   :attrs attrs})
+   :attrs   attrs})
 
 ;; Selectors
 
@@ -189,16 +190,16 @@
                loc (move loc)
                [selector & selectors :as same] (rest selectors)]
           (cond
-           (clj/and selector (nil? loc)) false
-           (nil? selector) result
-           :else (let [result (selector loc)]
-                   (if (continue? result loc)
-                     (recur result
-                            (move loc)
-                            (if result
-                              selectors
-                              same))
-                     result))))
+            (clj/and selector (nil? loc)) false
+            (nil? selector) result
+            :else (let [result (selector loc)]
+                    (if (continue? result loc)
+                      (recur result
+                             (move loc)
+                             (if result
+                               selectors
+                               same))
+                      result))))
         false))))
 
 (defn descendant-of
@@ -283,8 +284,10 @@
 
 (defn classes
   "Set the node's class attribute to the string."
-  [value]
-  (attr :class value))
+  [& values]
+  (attr :class (str/join " " (into #{} (if (coll? (first values))
+                                         (first values)
+                                         values)))))
 
 (defn id
   "Set the node's id to the string."
@@ -292,7 +295,7 @@
   (attr :id value))
 
 (defn add-class
-  "Add a class to the node. Does not replace existng classes."
+  "Add a class to the node. Does not replace existing classes."
   [class]
   (fn [node]
     (update-in node [:attrs :class]
@@ -375,10 +378,10 @@
   "Returns the text value of a node and its contents."
   [node]
   (cond
-   (string? node) node
-   (and (map? node)
-        (not= (:type node) :comment)) (string/join (map text (:content node)))
-   :else ""))
+    (string? node) node
+    (and (map? node)
+         (not= (:type node) :comment)) (string/join (map text (:content node)))
+    :else ""))
 
 (defn ^:private zip-seq
   "Get a seq of all of the nodes in a zipper."
@@ -420,8 +423,8 @@
   [s & args]
   (let [[args fns] (split-keyword-args args)]
     (reduce #(if (sequential? %2)
-               (into % %2)
-               (conj % %2))
+              (into % %2)
+              (conj % %2))
             []
             (for [node (if-let [selector (:select args)]
                          (mapcat #(zip (select % selector)) s)
